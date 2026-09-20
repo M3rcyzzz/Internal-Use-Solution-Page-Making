@@ -77,13 +77,35 @@ const python = (...args) => execFileSync(process.env.PYTHON || 'python3', args, 
       await agent.locator('[data-agent-save="1"]').click();await tabs.first().click();await agent.locator('[data-agent-save="1"]').click();assert.equal(await agent.locator('[data-agent-cards] .t0-analysis').count(),1);
       await agent.locator('summary').filter({hasText:'Scheduled Tasks'}).click();await agent.locator('[data-agent-task]').click();await agent.locator('[data-agent-task]').click();assert.equal(await agent.locator('[data-agent-tasks] li').count(),1);
       await agent.locator('[data-agent-reset]').click();assert.equal(await agent.locator('[data-agent-cards] .t0-analysis').count(),0);assert.equal(await agent.locator('[data-agent-tasks] li').count(),0);assert.equal(await agent.locator('details[open]').count(),0);
+      const builder=page.locator('#builder-editor');
+      const choose=async id=>{await builder.locator(`[data-builder-preset="${id}"]`).click();assert.equal(await builder.locator('[data-builder-diff]').isVisible(),true);};
+      const apply=async id=>{await choose(id);await builder.locator('[data-builder-apply]').click();};
+      await builder.locator('#builder-prompt').fill('<img src=x onerror=alert(1)>');await builder.locator('[type=submit]').click();
+      assert.equal(await builder.locator('[data-builder-version]').innerText(),'v1');assert.equal(await builder.locator('[data-builder-apply]').isDisabled(),true);
+      await choose('board');assert.equal(await app.locator('[data-app-nav="board"]').isVisible(),false);
+      await builder.locator('#builder-prompt').fill('Unprepared edit');assert.equal(await builder.locator('[data-builder-apply]').isDisabled(),true);
+      await apply('board');assert.equal(await builder.locator('[data-builder-version]').innerText(),'v2');assert.equal(await app.locator('[data-app-view="board"]').isVisible(),true);
+      assert.equal(await app.locator('.t0-board-card').count(),8);assert.equal(await hero.locator('[data-app-nav="board"]').isVisible(),false);
+      await app.evaluate(el=>el.dispatchEvent(new CustomEvent('t0:app-command',{detail:{action:'apply',id:'board'}})));
+      assert.equal(await builder.locator('[data-builder-version]').innerText(),'v2');
+      await apply('priority');assert.equal(await app.locator('[data-app-priority-heading]').isVisible(),true);assert.ok((await app.locator('[data-app-rows] tr').first().innerText()).includes('WO-2401'));
+      await apply('downtime');assert.equal(await builder.locator('[data-builder-version]').innerText(),'v4');await builder.locator('[data-builder-inspect]').click();
+      for(const check of await app.locator('[data-detail-checks] input').all())await check.check();
+      await app.locator('[data-detail-note]').fill(lang==='en'?'Repair complete.':'已处理完成。');
+      for(const value of ['','-1','1.5']){await app.locator('[data-detail-downtime]').fill(value);await app.locator('[data-detail-complete]').click();assert.equal(await metric('open'),'4');assert.ok(await app.locator('[data-detail-error]').innerText());}
+      await app.locator('[data-detail-downtime]').fill('12');await app.locator('[data-detail-complete]').click();assert.equal(await metric('open'),'3');
+      assert.ok((await app.locator('[data-detail-history]').innerText()).includes('12'));await page.keyboard.press('Escape');
+      await builder.locator('[data-builder-undo]').click();assert.equal(await builder.locator('[data-builder-version]').innerText(),'v3');assert.equal(await metric('open'),'3');
+      await builder.locator('[data-builder-undo]').click();assert.equal(await app.locator('[data-app-priority-heading]').isVisible(),false);
+      await builder.locator('[data-builder-undo]').click();assert.equal(await app.locator('[data-app-nav="board"]').isVisible(),false);assert.equal(await builder.locator('[data-builder-undo]').isDisabled(),true);
+      await app.locator('[data-app-reset]').click();assert.equal(await builder.locator('[data-builder-version]').innerText(),'v1');assert.equal(await metric('open'),'4');
       const prompt=lang==='en'?'Editable local requirements':'可编辑的本地需求';await page.locator('#builder-prompt').fill(prompt);
       // No system clipboard mutation: test success and failure deterministically.
       await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.copiedPrompt=value;}}}));
       await page.locator('[data-copy-prompt]').click();await page.waitForFunction(expected=>window.copiedPrompt===expected,prompt);
       await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined}));
       await page.locator('[data-copy-prompt]').click();assert.equal(await page.locator('#builder-prompt').evaluate(el=>el.selectionEnd-el.selectionStart),prompt.length);
-      await page.addScriptTag({path:path.join(directory,'app-demo.js')});await page.addScriptTag({path:path.join(directory,'components.js')});
+      await page.addScriptTag({path:path.join(directory,'app-demo.js')});await page.addScriptTag({path:path.join(directory,'components.js')});await page.addScriptTag({path:path.join(directory,'builder-demo.js')});
       await agent.locator('[data-agent-save="0"]').click();assert.equal(await agent.locator('[data-agent-cards] .t0-analysis').count(),1);await agent.locator('[data-agent-reset]').click();
       for(const width of [1440,1024,375]){
         await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`Overflow at ${width} in ${lang}`);
@@ -94,16 +116,25 @@ const python = (...args) => execFileSync(process.env.PYTHON || 'python3', args, 
         await page.keyboard.press('Escape');
         await app.locator('[data-app-reset]').click();
         if(screenshotDir){fs.mkdirSync(screenshotDir,{recursive:true});await app.screenshot({path:path.join(screenshotDir,`${lang}-${width}-app.png`)});}
+        await apply('board');assert.equal(await builder.locator('[data-builder-version]').innerText(),'v2');
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+        if(screenshotDir)await page.locator('#builder').screenshot({path:path.join(screenshotDir,`${lang}-${width}-builder-paired.png`)});
+        await apply('downtime');await builder.locator('[data-builder-inspect]').click();assert.equal(await app.locator('[data-detail-downtime]').isVisible(),true);
+        for(const check of await app.locator('[data-detail-checks] input').all())await check.check();
+        await app.locator('[data-detail-note]').fill(lang==='en'?'Checked and repaired.':'已检查修复。');await app.locator('[data-detail-downtime]').fill('5');await app.locator('[data-detail-complete]').click();
+        assert.equal(await metric('open'),'3');await page.keyboard.press('Escape');await app.locator('[data-app-reset]').click();
+
       }
       // A single HTML file in an otherwise empty folder: no build or sibling assets.
-      const standalone=path.join(temp,'isolated-'+lang,'demo.html');python(path.join(__dirname,'render_demo.py'),config,'--output',standalone);
+      const standalone=path.join(temp,'isolated-'+lang,'demo.html');python(path.join(__dirname,'render_demo.py'),config,'--with-builder','--output',standalone);
       await page.goto('file://'+standalone);const standaloneApp=page.locator('#app-reference');
       await standaloneApp.locator('[data-app-nav="orders"]').click();assert.equal(await standaloneApp.locator('[data-app-rows] tr').count(),8);
-      await page.reload();assert.equal(await standaloneApp.locator('[data-app-metric="open"]').innerText(),'4');
+      await page.locator('[data-builder-preset="board"]').click();await page.locator('[data-builder-apply]').click();assert.equal(await standaloneApp.locator('[data-app-view="board"]').isVisible(),true);
+      await page.reload();assert.equal(await standaloneApp.locator('[data-app-metric="open"]').innerText(),'4');assert.equal(await page.locator('[data-builder-version]').innerText(),'v1');
       const nojs=await browser.newContext({javaScriptEnabled:false,offline:true});const staticPage=await nojs.newPage();await staticPage.goto('file://'+standalone);
       assert.equal(await staticPage.locator('[data-app-metric="total"]').innerText(),'8');assert.equal(await staticPage.locator('[data-demo-control]:enabled').count(),0);
       assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
-      results.push({lang,appViewsSearchAndFilters:true,validatedWorkCompletion:true,linkedMetricsAndAssets:true,assignmentAndHistory:true,resetAndInstanceIsolation:true,namespace:true,agent:true,keyboardAndFocus:true,widths:[1440,1024,375],offlineSingleFile:true,noJsReadable:true,pageErrors:errors,networkRequests:requests});
+      results.push({lang,appViewsSearchAndFilters:true,validatedWorkCompletion:true,linkedMetricsAndAssets:true,assignmentAndHistory:true,resetAndInstanceIsolation:true,namespace:true,agent:true,keyboardAndFocus:true,widths:[1440,1024,375],offlineSingleFile:true,noJsReadable:true,builderPreviewApplyUndo:true,builderAppVersionSync:true,requiredDowntimeValidation:true,pageErrors:errors,networkRequests:requests});
       await nojs.close();await context.close();
     }
     console.log(JSON.stringify(results,null,2));

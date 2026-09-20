@@ -257,7 +257,30 @@
           ]
         }
       ]
-    }
+    },
+    "changes": [
+      {
+        "id": "board",
+        "title": "Add a status board",
+        "prompt": "Add a work-order board grouped by status, with urgent work first.",
+        "before": "Three application views, with work orders shown as a table.",
+        "after": "A new Status board view groups the same work orders into three columns. Cards open their actual work details."
+      },
+      {
+        "id": "priority",
+        "title": "Show urgent work first",
+        "prompt": "Show priority in the work-order list and put unfinished urgent work first.",
+        "before": "Five table columns, ordered by due date.",
+        "after": "A Priority column is added. Unfinished urgent work is listed first, while the existing filters still work."
+      },
+      {
+        "id": "downtime",
+        "title": "Require downtime on completion",
+        "prompt": "Require downtime in whole minutes before completing an urgent work order.",
+        "before": "Completion requires an owner, a finished checklist and a completion note.",
+        "after": "Urgent work gains a required Downtime field. Empty, negative or fractional minutes block completion; valid minutes are recorded in the activity."
+      }
+    ]
   },
   "agent": {
     "heading": "Find open maintenance work",

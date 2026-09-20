@@ -100,10 +100,25 @@ class ComponentTests(unittest.TestCase):
     def test_missing_demo_and_broken_control_target(self):
         self.mutate('data-t0-demo="app"','data-removed="app"')
         self.mutate('aria-controls="agent-chat"','aria-controls="missing-panel"')
-        self.assertTrue({'interactive-demo','demo-contract','aria-reference'}<=self.codes())
+        self.assertTrue({'builder-link','demo-contract','aria-reference'}<=self.codes())
     def test_evidence_reason_required(self):
         self.mutate('data-evidence-reason="User-requested original capture"','')
         self.assertIn('evidence-reason',self.codes())
     def test_interactive_visual_requires_inventory_id(self):
         self.mutate('id="builder-preview"','');self.assertIn('demo-id',self.codes())
+    def test_builder_requires_a_paired_app(self):
+        self.mutate('data-app-target="builder-preview"','data-app-target="agent-demo"')
+        self.assertIn('builder-link',self.codes())
+    def test_builder_cannot_be_copy_only(self):
+        self.mutate('data-builder-apply','data-removed')
+        self.assertIn('builder-changes',self.codes())
+    def test_builder_changes_are_allowlisted(self):
+        c=copy.deepcopy(self.config);c['builder']['changes'][0]['id']='execute_arbitrary_script'
+        with self.assertRaisesRegex(ValueError,'Unsupported Builder change'):render(c)
+    def test_builder_prompt_matching_is_unambiguous(self):
+        c=copy.deepcopy(self.config);c['builder']['changes'][1]['prompt']=c['builder']['changes'][0]['prompt']
+        with self.assertRaisesRegex(ValueError,'prompts must be unique'):render(c)
+    def test_builder_configuration_is_escaped(self):
+        c=copy.deepcopy(self.config);c['builder']['changes'][0]['after']='</script><img src=x onerror=alert(1)>'
+        s=render(c);self.assertNotIn('</script><img',s);self.assertIn('\\u003c/script\\u003e',s)
 if __name__=='__main__':unittest.main()

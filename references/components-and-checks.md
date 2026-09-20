@@ -7,7 +7,7 @@
 每页有数据采集与 UNS（`#namespace`）、Builder（`#builder`）、UNS Agent（`#uns-agent`）和服务模式（`#delivery`）。生成器现提供四个片段；它们不包含网站导航、Hero、其他业务场景或页脚，不能当作完整页面。全页其他示意视觉也需按交互契约实现。
 
 - [Namespace](../assets/components/namespace.html)：选择数据来源、展开业务对象与字段；按 [数据接入](data-acquisition.md) 校验业务适用性。
-- [Builder](../assets/components/builder.html) 使用 [完整 App 模型](../assets/components/app-demo.html) 作为底层预览，保留右下 Prompt；包含工作台、工单和设备视图，支持筛选、详情、分派、表单校验与完成记录；指标和图表随数据更新。需求可编辑与复制。
+- [Builder](../assets/components/builder.html) 使用 [完整 App 模型](../assets/components/app-demo.html) 作为底层预览，保留右下 Prompt；需求可预览差异并应用到 App，新增看板、优先级列或完工规则，支持版本同步与撤销。App 的详情、分派、表单校验、指标和图表随实际状态更新。
 - [Agent](../assets/components/agent.html)：预设问答、Source、Chat/Card List、示例卡片和任务，均只操作本页状态。
 - [样式](../assets/components/components.css) 与 [运行时](../assets/components/components.js) 随片段复制；字体与品牌沿用官网 token。服务模式仍从原 EMS 模板生成，不改变固定文字、按钮、链接和布局。
 
@@ -15,7 +15,7 @@
 python3 /path/to/skill/scripts/render_components.py config.json --output output/components.html
 ```
 
-合入当前页面的 main，保留生成片段中的三个 CSS 和两个 JS 引用。已有同名模块先替换，不叠加 ID；相对资源按最终页面目录解析。默认拒绝覆盖，已确认替换时可用 `--force`。最终交付真实可打开的整页，不分享配置模板或这个构建片段。
+合入当前页面的 main，保留生成片段中的四个 CSS 和三个 JS 引用。已有同名模块先替换，不叠加 ID；相对资源按最终页面目录解析。默认拒绝覆盖，已确认替换时可用 `--force`。最终交付真实可打开的整页，不分享配置模板或这个构建片段。
 
 ## 配置
 
@@ -23,6 +23,7 @@ python3 /path/to/skill/scripts/render_components.py config.json --output output/
 
 - language、app 指定页面语言与应用名称，logo 使用真实品牌资源。
 - `builder.preview` 定义 App 数据与状态，字段见 [配置说明](interactive-demos.md#使用随包实现)。截图只作为视觉或事实参考。
+- `builder.changes` 定义需求及实际界面变更，按 [Builder 联动](interactive-demos.md#builder-与-app-联动) 配置和实现。不能保留只有复制功能的 Builder。
 - `namespace` 定义 heading、intro、sources；来源的 topic 关联 Agent sources，不额外杜撰另一份模型。
 - agent 保留 heading、intro、scenario、question、answer、followup、sources、field_refs、data_status 和 result。`examples` 增加预设问答；每个问题显式声明 field_refs，followup 对应一个已有问题。sources 叶子在 Metric / State / Action 下；未声明字段拒绝生成。
 - result 支持非空 table 或 list；需交互趋势等其他形式时，制作和验证相应组件，不把所有问题强制改为列表。模型中的源、单位、统计范围及演示状态必须一致。
@@ -49,6 +50,7 @@ localized 证据同时记录原图 source；路径相对最终页面。没有证
 
 - 必有模块、采集方式、UNS 业务模型、Builder 可操作预览与 Prompt、Agent 问答/Source/结果。
 - 三个产品模块的交互根、语义控件、视觉用途声明、证据例外原因、ARIA 目标引用；拒绝用可点击图片/视频充当模型。
+- Builder 编辑器与同模块 App 的目标绑定、差异预览、应用和撤销控件；行为仍由浏览器逐项验证。
 - 服务模式两栏各三个列表项、原始固定按钮与链接；结构相同不等于像素相同。
 - Title/Description/H1、重复 ID、本地资源与 CSS 依赖、锚点、语言互链、未翻译文字和旧项目名、证据图片来源。
 
@@ -62,3 +64,5 @@ node /path/to/skill/scripts/test_interactions.cjs
 ```
 
 浏览器测试使用已安装的 Playwright/Chromium，依赖发现与实际范围见 [交互验收](interactive-demos.md#验收和交付)。它操作生成的中英模型，覆盖三个 App 视图、搜索/筛选/排序、校验失败与完成工单、分派、关联指标/活动、独立实例、UNS 与 Agent、重置、键盘/焦点、1440/1024/375px 和单 HTML 离线打开。定制图表/页面必须另做实际操作；不能把标准模板通过当成整页都已验证。
+
+Builder 还覆盖预览不改 App、编辑失效、未知需求、实际应用三种变更、版本同步、重复应用、撤销保留业务记录、新增字段的完工校验，以及带 Builder 的单文件离线运行。

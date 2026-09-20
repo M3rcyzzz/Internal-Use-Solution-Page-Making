@@ -72,6 +72,12 @@ def audit(page,manifest=None,forbidden=()):
         bn=list(ids['builder'].all())
         if not any(n.attrs.get('data-t0-demo') for n in bn):error('builder-preview','Builder requires a clickable application preview')
         if not any(n.attrs.get('id')=='builder-prompt' and n.text().strip() for n in bn):error('builder-prompt','Builder prompt is missing')
+        editors=[n for n in bn if n.attrs.get('data-t0-demo')=='builder']
+        if not editors:error('builder-link','Builder needs an interactive editor paired with its App')
+        for editor in editors:
+            target=ids.get(editor.attrs.get('data-app-target'))
+            if target not in bn or target.attrs.get('data-t0-demo')!='app':error('builder-link','Builder target must be an App in the same module')
+            if not all(any(key in n.attrs for n in editor.all()) for key in ('data-builder-diff','data-builder-apply','data-builder-undo')):error('builder-changes','Builder requires preview, apply and undo controls')
     if 'uns-agent' in ids:
         an=list(ids['uns-agent'].all())
         if not any(n.tag=='code' and re.search(r'/(Metric|State|Action)/',n.text()) for n in an):error('agent-source','Missing UNS topic source')

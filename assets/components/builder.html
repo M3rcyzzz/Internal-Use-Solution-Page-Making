@@ -2,11 +2,18 @@
   <div class="t0-copy"><h2>$heading</h2><p>$intro</p></div>
   <div class="t0-generation">
     <div class="t0-result">$preview</div>
-    <div class="t0-prompt" aria-label="$prompt_label">
-      <div class="t0-toolbar"><img src="$logo" alt="Tier0" width="64" height="24"><span>App / Builder</span></div>
+    <div id="builder-editor" class="t0-prompt" data-t0-demo="builder" data-visual="interactive" data-app-target="$app_id" aria-label="$prompt_label">
+      <div class="t0-toolbar">$logo<span>App / Builder</span><span class="t0-builder-version" data-builder-version>v1</span></div>
       <h3>$builder_title</h3>
-      <div class="t0-input"><label for="builder-prompt">$prompt_label</label><textarea id="builder-prompt" rows="5">$prompt</textarea><div class="t0-bottom"><span>$app</span><button type="button" disabled data-demo-control data-copy-prompt>$copy_label</button></div></div>
+      <p class="t0-builder-context">$app · $local_label</p>
+      <details class="t0-builder-brief"><summary>$brief_label</summary><p>$prompt</p></details>
+      <div class="t0-builder-presets" role="group" aria-label="$presets_label">$presets</div>
+      <form class="t0-input" data-builder-form><label for="builder-prompt">$prompt_label</label><textarea id="builder-prompt" rows="3">$change_prompt</textarea><div class="t0-bottom"><button type="button" disabled data-demo-control data-copy-prompt>$copy_label</button><button type="submit" disabled data-builder-control>$preview_label →</button></div></form>
+      <div class="t0-builder-diff" data-builder-diff hidden><strong data-builder-change-title></strong><dl><dt>$before_label</dt><dd data-builder-before></dd><dt>$after_label</dt><dd data-builder-after></dd></dl><button type="button" disabled class="t0-builder-primary" data-builder-apply>$apply_label</button></div>
+      <p role="status" data-builder-status></p>
+      <div class="t0-builder-actions"><button type="button" disabled data-builder-undo>$undo_label</button><button type="button" data-builder-inspect hidden>$inspect_label</button></div>
       <p role="status" data-copy-status></p>
+      <script type="application/json" data-builder-config>$changes</script>
     </div>
   </div>
 </section>

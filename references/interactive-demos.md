@@ -12,7 +12,7 @@
 | 数据接入、UNS 树 | 选择来源查看采集方式与目标主题，展开对象与字段；源、模型、Agent 来源一致 |
 | 流程、架构或关系示意 | 用步骤导航、对象列表/详情等界面组织关系；选择步骤或节点更新对应输入、状态或输出 |
 | 趋势、统计示意 | 切换对象/周期/系列更新实际图表和可读数据；单位、范围和计算一致，不能只改标题 |
-| Builder | 保留应用预览在底、Prompt 在右下的构图；预览可操作，需求可编辑/复制，不能把预设效果反馈成已生成应用 |
+| Builder | 保留 App 在底、Prompt 在右下的构图；预览具体变更、应用到关联 App、验证新增视图/字段/规则，并能撤销；版本与反馈一致 |
 | Agent | 预设问题切换回答、Source 和结果；Chat/Card List 可切换，添加卡片或示例任务改变本页状态 |
 
 截图放大、图片上的透明热点、仅 hover 高亮、无状态变化的按钮、循环播放录屏都不满足此要求。不要给导航、发送、筛选等控件制造无效外观。未覆盖的操作删去；确需保留的不可用状态说明具体原因。
@@ -43,6 +43,24 @@ Logo、装饰图标、真实现场照片以及用户明确要求保留的原始�
 
 随包 [App 模型](../assets/components/app-demo.html) 与 [运行时](../assets/components/app-demo.js) 提供上述设备维护实现：三个视图、八条工单、六台设备、搜索/筛选/排序、来源一致的统计、可校验的完成操作、负责人分派和活动记录。它是制作其他业务 App 的可运行质量参考，不是所有场景的固定模板。
 
+## Builder 与 App 联动
+
+让读者体验一句具体需求如何改变正在使用的 App。先展示可审查的前后差异，再应用到同一个实例，用新的界面或业务规则完成一次操作。App 继续保有已填写的记录，不能每次换需求就替换成另一张截图或重置全部数据。
+
+随包提供三种有实际结果的需求：
+
+- `board`：增加状态看板导航与三列工单卡片；卡片打开同一条工单详情，完工后移入已完成列。
+- `priority`：增加优先级列，并把紧急未完成工单排在前面；保留区域与状态筛选。
+- `downtime`：未完成的紧急工单增加必填停机分钟数；空值、负数或小数阻止完工，合法值写入该工单的活动记录。撤销规则后不删除已经完成的工单或其记录。
+
+这些是设备维护的演示变更。其他场景选择能体现业务适配的需求，如批次字段、检验放行条件、排程视图；同步实现预览描述、App 实际状态及行为测试，不能只改预设按钮上的文字。
+
+`builder.changes` 每项包含唯一 id、title、prompt、before、after；随包运行时只接受上述已实现的 id。需求框可编辑，未匹配预设时不更改 App；编辑后使旧的变更预览失效，重新预览才可应用。不要用假进度条或延迟暗示真实 AI 正在生成。
+
+HTML 中 Builder 用 `data-app-target` 显式绑定同一模块的 App。通过目标元素上的 [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent) 传递限定的 `t0:app-command`（state/apply/inspect/undo）和 `t0:app-state`；不依赖全局选择器或执行输入代码。已有应用栈可使用对应的共享状态方式。App 持有配置版本与业务记录，Builder 根据 App 返回的版本/变更状态显示反馈；不提前宣称应用成功。
+
+重复应用同一变更不增加版本。撤销回退界面配置，保留业务操作；App 的重置同时恢复配置、业务数据和 Builder 初态。浏览器验证新规则确实能拦截错误输入、新视图和统计确实使用同一组记录、其他 App 实例不受影响，以及键盘和手机上的整个流程。
+
 ## 使用随包实现
 
 生成器现在输出 Namespace、Builder、Agent、服务模式四个片段。仍需合入当前页面的语义 main、官方导航和页脚；**片段不是可直接分享的整页**。
@@ -61,9 +79,10 @@ python3 scripts/render_components.py assets/components/example.zh-CN.json --outp
 
 ```sh
 python3 scripts/render_demo.py assets/components/example.zh-CN.json --output output/app.html
+python3 scripts/render_demo.py assets/components/example.zh-CN.json --with-builder --output output/builder-app.html
 ```
 
-这个文件可单独打开和分享，含全部样式、脚本和示例数据。它用于查看 App 质量，不替代带完整叙事、品牌、导航与页脚的方案页。
+这些文件可单独打开和分享，含全部样式、脚本和示例数据。`--with-builder` 输出可操作的 Builder/App 联动参考；参考页不内置品牌素材，不替代带完整叙事、官方品牌、导航与页脚的方案页。
 
 ## 验收和交付
 

@@ -34,6 +34,12 @@ def labels(lang):
         'owner_saved': ('负责人已更新', 'Owner updated'), 'complete_saved': ('工单已完成', 'Order completed'),
         'reset_done': ('已恢复示例初始数据。', 'Initial example data restored.'),
         'nojs': ('启用 JavaScript 后可切换视图和操作工单。', 'Enable JavaScript to change views and operate work orders.'),
+        'board': ('状态看板', 'Status board'), 'downtime': ('停机时长（分钟）', 'Downtime (minutes)'),
+        'downtime_error': ('紧急工单须填写大于等于 0 的整数停机分钟数。', 'Urgent work requires a whole number of downtime minutes, zero or greater.'),
+        'change_applied': ('Builder 改动已应用', 'Builder change applied'),
+        'new_rule': ('紧急工单完工规则', 'Urgent completion rule'),
+        'inspect_change': ('查看改动', 'Inspect change'),
+        'no_urgent': ('当前范围没有未完成的紧急工单。', 'No open urgent work in the current area.'),
     }
     return {key: pair[1 if en else 0] for key, pair in pairs.items()}
 
