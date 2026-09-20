@@ -1,0 +1,68 @@
+{
+  "language": "en",
+  "app": "EAM",
+  "logo": "assets/tier0-logo-black.svg",
+  "builder": {
+    "heading": "Build your maintenance application",
+    "intro": "Describe assets, records, roles and maintenance workflows.",
+    "prompt": "Build an equipment management app linking asset records, inspections and work orders. Managers assign work, technicians record results, and warehouse staff log parts issued. Track open work by workshop and asset, and retain confirmed maintenance history.",
+    "image": {
+      "path": "assets/dashboard.en.png",
+      "alt": "EAM application showing asset status and maintenance work",
+      "width": 1702,
+      "height": 924,
+      "language": "en",
+      "kind": "localized",
+      "source": "assets/dashboard.png"
+    }
+  },
+  "agent": {
+    "heading": "Find open maintenance work",
+    "intro": "Analyze work order status, priority and ownership stored in UNS.",
+    "scenario": "Urgent work orders",
+    "question": "Which urgent work orders are still open, and who owns them?",
+    "answer": "This example filters unfinished urgent work and lists the asset and owner.",
+    "sources": [
+      {
+        "path": "v1/Factory_A/Workshop_A/State/work_orders",
+        "fields": [
+          "work_order_id",
+          "equipment_id",
+          "status",
+          "priority",
+          "assignee"
+        ]
+      }
+    ],
+    "field_refs": [
+      "v1/Factory_A/Workshop_A/State/work_orders#status",
+      "v1/Factory_A/Workshop_A/State/work_orders#priority",
+      "v1/Factory_A/Workshop_A/State/work_orders#equipment_id",
+      "v1/Factory_A/Workshop_A/State/work_orders#assignee"
+    ],
+    "data_status": "illustrative",
+    "result": {
+      "type": "table",
+      "title": "Urgent work orders",
+      "columns": [
+        "Asset",
+        "Status",
+        "Owner"
+      ],
+      "rows": [
+        [
+          "P-103",
+          "Assigned",
+          "Zhang Wei"
+        ]
+      ]
+    },
+    "followup": "Group open work orders by workshop."
+  },
+  "delivery": {
+    "scope": "Validate one workshop first, then expand to more assets and maintenance workflows.",
+    "organize": "Organize asset records, data points and maintenance history",
+    "integration": "Define assets, system interfaces and the UNS model",
+    "customize": "Customize inspection rules, app pages and maintenance workflows"
+  }
+}
