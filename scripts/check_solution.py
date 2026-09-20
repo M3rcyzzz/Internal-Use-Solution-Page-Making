@@ -29,7 +29,7 @@ class Document(HTMLParser):
     def handle_data(self,d):self.current.data.append(d)
 
 def audit(page,manifest=None,forbidden=()):
-    report={'page':str(page),'errors':[],'warnings':[],'manual_required':['Desktop/mobile rendering and interactions','Screenshot translation, values and image fidelity','Business claims, UNS data sufficiency and analysis accuracy']}
+    report={'page':str(page),'errors':[],'warnings':[],'manual_required':['Operate every demo: before/action/after/reset, keyboard, mobile and offline delivery','Visual inventory: every diagram or demo screenshot replaced by an interactive model; evidence exceptions reviewed','Translation of all demo states and evidence images','Business claims, UNS data sufficiency and analysis accuracy']}
     error=lambda code,msg:report['errors'].append({'code':code,'message':msg})
     warn=lambda code,msg:report['warnings'].append({'code':code,'message':msg})
     try:raw=page.read_text()
@@ -44,13 +44,33 @@ def audit(page,manifest=None,forbidden=()):
         if count>1:error('duplicate-id',id)
     for id in ('namespace','builder','uns-agent','delivery'):
         if id not in ids:error('module','Missing required module #'+id)
+    for id in ('namespace','builder','uns-agent'):
+        if id in ids and not any(n.attrs.get('data-visual')=='interactive' and 'data-t0-demo' in n.attrs for n in ids[id].all()):
+            error('interactive-demo','Required interactive model missing in #'+id)
+    for n in nodes:
+        if 'data-visual' in n.attrs:
+            kind=n.attrs['data-visual']
+            if kind not in ('interactive','evidence','brand','decoration'):error('visual-kind','Unknown visual classification: '+kind)
+            if kind=='interactive':
+                if 'data-t0-demo' not in n.attrs:error('demo-contract','Interactive visual needs a scoped data-t0-demo root')
+                if not n.attrs.get('id','').strip():error('demo-id','Interactive visual needs a unique DOM id for its verification inventory')
+                controls=[c for c in n.all() if c.tag in ('button','summary','input','select')]
+                if not controls:error('demo-control','Interactive visual has no semantic controls')
+            if kind=='evidence' and not n.attrs.get('data-evidence-reason','').strip():error('evidence-reason','Static evidence requires its source/use reason')
+        if n.tag in ('img','svg','canvas','video') and n.attrs.get('alt')!='Tier0' and n.attrs.get('aria-hidden')!='true':
+            parent=n;visual=None
+            while parent:
+                if 'data-visual' in parent.attrs:visual=parent.attrs['data-visual'];break
+                parent=parent.parent
+            if visual is None:error('visual-inventory','Unclassified visual; implement an interactive model or record an evidence/brand/decoration exception')
+            if n.tag in ('img','video') and visual=='interactive':error('static-demo','A clickable image/video is not an interactive interface model')
     if 'namespace' in ids:
         nn=list(ids['namespace'].all())
         if not any((n.cls('eam-source') or 'data-uns-source' in n.attrs) and n.text().strip() for n in nn):error('uns-acquisition','Missing readable data sources and acquisition methods')
         if not any((n.cls('uns-model') or 'data-uns-model' in n.attrs) and n.text().strip() for n in nn):error('uns-model','Missing readable UNS business object model')
     if 'builder' in ids:
         bn=list(ids['builder'].all())
-        if not any(n.tag=='img' and n.attrs.get('alt')!='Tier0' for n in bn):error('builder-image','Builder requires an application result image')
+        if not any(n.attrs.get('data-t0-demo') for n in bn):error('builder-preview','Builder requires a clickable application preview')
         if not any(n.attrs.get('id')=='builder-prompt' and n.text().strip() for n in bn):error('builder-prompt','Builder prompt is missing')
     if 'uns-agent' in ids:
         an=list(ids['uns-agent'].all())
@@ -71,6 +91,9 @@ def audit(page,manifest=None,forbidden=()):
     for term in forbidden:
         if term.casefold() in readable.casefold():error('stale-project','Unexpected project term: '+term)
     for n in nodes:
+        for key in ('aria-controls','aria-labelledby','aria-describedby'):
+            for target in n.attrs.get(key,'').split():
+                if target not in ids:error('aria-reference','Missing '+key+' target: '+target)
         if n.tag=='p':
             t=n.text()
             if len(re.findall('[\u4e00-\u9fff]',t))>120 or len(t.split())>85:warn('long-paragraph',t[:90])
@@ -120,7 +143,7 @@ def audit(page,manifest=None,forbidden=()):
             if entry.get('kind')=='localized':
                 if not entry.get('source'):error('image-provenance','Localized image missing original: '+key)
                 else:resource(entry['source'],page.parent)
-    else:warn('image-manifest','No screenshot language manifest; language of image pixels has not been checked')
+    elif referenced_images:warn('image-manifest','No evidence-image language manifest; image pixels have not been checked')
     report['static_status']='fail' if report['errors'] else 'pass'
     return report
 
